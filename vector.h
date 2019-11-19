@@ -14,12 +14,12 @@ template <typename T>
 class vector {
 
     struct helper {
-        size_t _size = 0;
-        size_t _capacity = 0;
-        size_t _amount = 0;
+        size_t size_ = 0;
+        size_t capacity_ = 0;
+        size_t amount_ = 0;
 
         T *next_elem() {
-            return reinterpret_cast<T *>(&_amount + sizeof(T));
+            return reinterpret_cast<T *>(&amount_ + sizeof(T));
         }
     };
 
@@ -27,12 +27,12 @@ class vector {
         return operator new(n);
     }
 
-    helper *alloc_many(size_t n) {
+    helper* alloc_many(size_t n) {
         auto new_helper = static_cast<helper *>(alloc_one(sizeof(T) * n + sizeof(helper)));
-        new_helper->_amount = 0;
-        new_helper->_size = 0;
-        new_helper->_capacity = n;
-        return &new_helper;
+        new_helper->amount_ = 0;
+        new_helper->size_ = 0;
+        new_helper->capacity_ = n;
+        return new_helper;
     }
 
     template<typename ...Args>
@@ -72,9 +72,9 @@ class vector {
             deallocate(ans);
             throw;
         }
-        ans->_capacity = n;
-        ans->_size = get_size();
-        ans->_amount = 0;
+        ans->capacity_ = n;
+        ans->size_ = get_size();
+        ans->amount_ = 0;
         return ans;
     }
 
@@ -89,17 +89,17 @@ class vector {
 
     size_t get_capacity() const noexcept {
         assert(get_variant() != nullptr);
-        return get_variant()->_capacity;
+        return get_variant()->capacity_;
     }
 
     size_t get_size() const noexcept {
         assert(get_variant() != nullptr);
-        return get_variant()->_size;
+        return get_variant()->size_;
     }
 
     size_t get_amount() const noexcept {
         assert(get_variant() != nullptr);
-        return get_variant()->_amount;
+        return get_variant()->amount_;
     }
 
     T *get_ptr() const noexcept {
@@ -112,9 +112,9 @@ class vector {
     }
 
     void detach() {
-        if (data_.index() == 0 && get_variant() != nullptr && get_variant()->_amount > 0) {
+        if (data_.index() == 0 && get_variant() != nullptr && get_variant()->amount_ > 0) {
             helper *new_helper = copy(get_capacity());
-            --get_variant()->_amount;
+            --get_variant()->amount_;
             data_ = new_helper;
         }
     }
@@ -143,7 +143,7 @@ public:
         if (!small()) {
             if (get_amount() == 0) {
                 assert(data_.index() == 0);
-                fail_destruct(get_size(), get_ptr());
+                destruct_if_failed(get_size(), get_ptr());
                 deallocate(std::get<0>(data_));
                 std::get<0>(data_) = nullptr;
             } else {
@@ -169,15 +169,15 @@ public:
                 helper *new_helper = alloc_many(4);
                 new_helper->size_ = 2;
                 try {
-                    construct(new_helper->get_next(), std::get<1>(data_));
+                    construct(new_helper->next_elem(), std::get<1>(data_));
                 } catch (...) {
                     deallocate(new_helper);
                     throw;
                 }
                 try {
-                    construct(new_helper->get_next() + 1, value);
+                    construct(new_helper->next_elem() + 1, value);
                 } catch (...) {
-                    destruct(new_helper->get_next());
+                    destruct(new_helper->next_elem());
                     deallocate(new_helper);
                     throw;
                 }
@@ -186,14 +186,14 @@ public:
                 if (get_size() >= get_capacity()) {
                     helper *new_helper = copy(get_capacity() * 2);
                     try {
-                        construct(new_helper->get_next() + get_size(), value);
+                        construct(new_helper->next_elem() + get_size(), value);
                     } catch (...) {
-                        fail_destruct(get_size(), new_helper->get_next());
+                        destruct_if_failed(get_size(), new_helper->next_elem());
                         deallocate(new_helper);
                         throw;
                     }
                     assert(data_.index() == 0);
-                    fail_destruct(get_size(), get_ptr());
+                    destruct_if_failed(get_size(), get_ptr());
                     deallocate(std::get<0>(data_));
                     std::get<0>(data_) = nullptr;
                     data_ = new_helper;
@@ -295,7 +295,7 @@ public:
                 helper *new_helper = alloc_many(n + 4);
                 new_helper->size_ = 1;
                 try {
-                    construct(new_helper->get_next(), std::get<1>(data_));
+                    construct(new_helper->next_elem(), std::get<1>(data_));
                 } catch (...) {
                     deallocate(new_helper);
                     throw;
@@ -304,7 +304,7 @@ public:
             }
         } else {
             helper *new_helper = copy(get_capacity() + n);
-            fail_destruct(get_size(), get_ptr());
+            destruct_if_failed(get_size(), get_ptr());
             deallocate(std::get<0>(data_));
             std::get<0>(data_) = nullptr;
             data_ = new_helper;
