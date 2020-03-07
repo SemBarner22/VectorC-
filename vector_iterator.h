@@ -1,4 +1,3 @@
-
 #ifndef MY_VECTOR_VECTOR_ITERATOR_H
 #define MY_VECTOR_VECTOR_ITERATOR_H
 
@@ -216,4 +215,3 @@ private:
 
 
 #endif //MY_VECTOR_VECTOR_ITERATOR_H
-

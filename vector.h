@@ -528,41 +528,11 @@ public:
     }
 };
 
-    template<class T>
-    void swap(vector<T>& first, vector<T> & that) {
-        first.swap(that);
-    }
+template<class T>
+void swap(vector<T>& first, vector<T> & that) {
+    first.swap(that);
+}
 
 #endif //MY_VECTOR_VECTOR_H
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
